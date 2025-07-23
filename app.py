@@ -1,9 +1,9 @@
 import streamlit as st
 import numpy as np
-import matplotlib.pyplot as plt
+import plotly.express as px
 
 # Constants
-F = 96485  # Faraday's constant, C/mol
+F = 96485  # Faraday's constant (C/mol)
 MOLAR_MASS_HOCL = 52.46  # g/mol
 ELECTRONS_PER_HOCL = 2
 FLOZ_TO_LITERS = 0.0295735
@@ -21,40 +21,69 @@ voltage = st.slider("Load Voltage (V)", 3.0, 12.0, 7.2, 0.1)
 volume_range = st.slider("Volume (fluid ounces)", 0.1, 10.0, (0.3, 1.0), 0.1)
 resistance_range = st.slider("Electrode Resistance (Ω)", 0.1, 10.0, (1.5, 4.0), 0.1)
 
-# --- Setup axes ---
+# --- Setup grid ---
 volume_values = np.linspace(volume_range[0], volume_range[1], 50)
 resistance_values = np.linspace(resistance_range[0], resistance_range[1], 50)
 
-Z = np.zeros((len(resistance_values), len(volume_values)))  # Time values
+data = {
+    "Volume (fl oz)": [],
+    "Resistance (Ω)": [],
+    "Time (s)": [],
+    "Power (W)": [],
+    "Time Category": [],
+}
 
-# --- Compute time grid ---
-for i, R in enumerate(resistance_values):
-    for j, floz in enumerate(volume_values):
+for R in resistance_values:
+    for floz in volume_values:
         liters = floz * FLOZ_TO_LITERS
         grams = (target_ppm * liters) / 1000
         mols = grams / MOLAR_MASS_HOCL
         charge = (mols * ELECTRONS_PER_HOCL * F) / faradaic_eff
         current = voltage / R
-        time = charge / current  # in seconds
-        Z[i, j] = time
+        time = charge / current
+        power = voltage**2 / R
 
-# --- Plot ---
-fig, ax = plt.subplots(figsize=(8, 5))
+        # Categorize by thresholds
+        if time <= 2:
+            category = "Fast (≤ 2s)"
+        elif time <= 5:
+            category = "Moderate (2–5s)"
+        else:
+            category = "Slow (> 5s)"
 
-# Mask for color bands
-cmap = plt.cm.get_cmap('RdYlGn_r')  # Green = fast, Red = slow
-bounds = [0, 2, 5, Z.max()]
-norm = plt.matplotlib.colors.BoundaryNorm(bounds, cmap.N)
+        data["Volume (fl oz)"].append(floz)
+        data["Resistance (Ω)"].append(R)
+        data["Time (s)"].append(time)
+        data["Power (W)"].append(power)
+        data["Time Category"].append(category)
 
-im = ax.imshow(Z, aspect='auto', cmap=cmap, norm=norm,
-               extent=[volume_values[0], volume_values[-1], resistance_values[-1], resistance_values[0]])
+import pandas as pd
+df = pd.DataFrame(data)
 
-cbar = fig.colorbar(im, ax=ax, orientation='vertical')
-cbar.set_label("Time to Generate Target HOCl (s)")
+# --- Plotly chart ---
+fig = px.density_heatmap(
+    df,
+    x="Volume (fl oz)",
+    y="Resistance (Ω)",
+    z="Time (s)",
+    hover_data={"Time (s)": True, "Power (W)": True},
+    color_continuous_scale=[
+        (0.0, "green"),
+        (0.4, "yellow"),
+        (1.0, "red"),
+    ],
+    nbinsx=50,
+    nbinsy=50,
+    title="HOCl Generation Time Heatmap",
+    labels={"z": "Time (s)"},
+)
 
-ax.set_xlabel("Volume (fl. oz)")
-ax.set_ylabel("Electrode Resistance (Ω)")
-ax.set_title("HOCl Generation Time")
+fig.update_layout(
+    xaxis_title="Volume (fl oz)",
+    yaxis_title="Electrode Resistance (Ω)",
+    coloraxis_colorbar=dict(title="Time (s)"),
+    height=600,
+)
 
-st.pyplot(fig)
+st.plotly_chart(fig, use_container_width=True)
 
