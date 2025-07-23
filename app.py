@@ -19,8 +19,8 @@ target_ppm = st.slider("Target HOCl Concentration (ppm)", 10, 500, 100, 10)
 faradaic_eff = st.slider("Faradaic Efficiency (%)", 10, 100, 50, 5) / 100
 voltage = st.slider("Load Voltage (V)", 3.0, 12.0, 7.2, 0.1)
 
-volume_range = st.slider("Volume (fl oz)", 0.1, 5.0, (0.3, 1.0), 0.1)
-resistance_range = st.slider("Electrode Resistance (Ω)", 0.1, 10.0, (1.5, 4.0), 0.1)
+volume_range = st.slider("Volume (fl oz)", 0.1, 5.0, (0.1, 1.0), 0.1)
+resistance_range = st.slider("Electrode Resistance (Ω)", 0.1, 10.0, (1.0, 4.0), 0.1)
 
 # --- Setup grid ---
 volume_values = np.linspace(volume_range[0], volume_range[1], 40)
