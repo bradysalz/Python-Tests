@@ -1,5 +1,6 @@
 import streamlit as st
 import numpy as np
+import pandas as pd
 import plotly.express as px
 
 # Constants
@@ -22,8 +23,8 @@ volume_range = st.slider("Volume (fluid ounces)", 0.1, 10.0, (0.3, 1.0), 0.1)
 resistance_range = st.slider("Electrode Resistance (Ω)", 0.1, 10.0, (1.5, 4.0), 0.1)
 
 # --- Setup grid ---
-volume_values = np.linspace(volume_range[0], volume_range[1], 50)
-resistance_values = np.linspace(resistance_range[0], resistance_range[1], 50)
+volume_values = np.linspace(volume_range[0], volume_range[1], 40)
+resistance_values = np.linspace(resistance_range[0], resistance_range[1], 40)
 
 data = {
     "Volume (fl oz)": [],
@@ -43,7 +44,7 @@ for R in resistance_values:
         time = charge / current
         power = voltage**2 / R
 
-        # Categorize by thresholds
+        # Categorize
         if time <= 2:
             category = "Fast (≤ 2s)"
         elif time <= 5:
@@ -57,33 +58,31 @@ for R in resistance_values:
         data["Power (W)"].append(power)
         data["Time Category"].append(category)
 
-import pandas as pd
 df = pd.DataFrame(data)
 
-# --- Plotly chart ---
-fig = px.density_heatmap(
+# --- Scatter Plot ---
+fig = px.scatter(
     df,
     x="Volume (fl oz)",
     y="Resistance (Ω)",
-    z="Time (s)",
-    hover_data={"Time (s)": True, "Power (W)": True},
-    color_continuous_scale=[
-        (0.0, "green"),
-        (0.4, "yellow"),
-        (1.0, "red"),
-    ],
-    nbinsx=50,
-    nbinsy=50,
-    title="HOCl Generation Time Heatmap",
-    labels={"z": "Time (s)"},
+    color="Time Category",
+    hover_data={
+        "Time (s)": True,
+        "Power (W)": True,
+        "Volume (fl oz)": False,
+        "Resistance (Ω)": False,
+    },
+    size_max=10,
+    title="HOCl Generation Time by Volume and Resistance",
+    color_discrete_map={
+        "Fast (≤ 2s)": "green",
+        "Moderate (2–5s)": "orange",
+        "Slow (> 5s)": "red",
+    },
 )
 
-fig.update_layout(
-    xaxis_title="Volume (fl oz)",
-    yaxis_title="Electrode Resistance (Ω)",
-    coloraxis_colorbar=dict(title="Time (s)"),
-    height=600,
-)
+fig.update_traces(marker=dict(size=8, line=dict(width=1, color="DarkSlateGrey")))
+fig.update_layout(height=600)
 
 st.plotly_chart(fig, use_container_width=True)
 
