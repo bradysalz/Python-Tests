@@ -19,7 +19,7 @@ target_ppm = st.slider("Target HOCl Concentration (ppm)", 10, 500, 100, 10)
 faradaic_eff = st.slider("Faradaic Efficiency (%)", 10, 100, 50, 5) / 100
 voltage = st.slider("Load Voltage (V)", 3.0, 12.0, 7.2, 0.1)
 
-volume_range = st.slider("Volume (fluid ounces)", 0.1, 10.0, (0.3, 1.0), 0.1)
+volume_range = st.slider("Volume (fl oz)", 0.1, 5.0, (0.3, 1.0), 0.1)
 resistance_range = st.slider("Electrode Resistance (Ω)", 0.1, 10.0, (1.5, 4.0), 0.1)
 
 # --- Setup grid ---
@@ -28,7 +28,7 @@ resistance_values = np.linspace(resistance_range[0], resistance_range[1], 40)
 
 data = {
     "Volume (fl oz)": [],
-    "Resistance (Ω)": [],
+    "Electrode Resistance (Ω)": [],
     "Time (s)": [],
     "Power (W)": [],
     "Time Category": [],
@@ -42,7 +42,7 @@ for R in resistance_values:
         charge = (mols * ELECTRONS_PER_HOCL * F) / faradaic_eff
         current = voltage / R
         time = charge / current
-        power = voltage**2 / R
+        power = voltage * current
 
         # Categorize
         if time <= 2:
@@ -53,7 +53,7 @@ for R in resistance_values:
             category = "Slow (> 5s)"
 
         data["Volume (fl oz)"].append(floz)
-        data["Resistance (Ω)"].append(R)
+        data["Electrode Resistance (Ω)"].append(R)
         data["Time (s)"].append(time)
         data["Power (W)"].append(power)
         data["Time Category"].append(category)
@@ -64,13 +64,13 @@ df = pd.DataFrame(data)
 fig = px.scatter(
     df,
     x="Volume (fl oz)",
-    y="Resistance (Ω)",
+    y="Electrode Resistance (Ω)",
     color="Time Category",
     hover_data={
-        "Time (s)": True,
-        "Power (W)": True,
+        "Time (s)": ':.1f',
+        "Power (W)": ':.1f',
         "Volume (fl oz)": False,
-        "Resistance (Ω)": False,
+        "Electrode Resistance (Ω)": False,
     },
     size_max=10,
     title="HOCl Generation Time by Volume and Resistance",
@@ -82,6 +82,7 @@ fig = px.scatter(
 )
 
 fig.update_traces(marker=dict(size=8, line=dict(width=1, color="DarkSlateGrey")))
+fig.update_traces(hoverlabel=dict(font=dict(size=20)))
 fig.update_layout(height=600)
 
 st.plotly_chart(fig, use_container_width=True)
