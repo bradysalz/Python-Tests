@@ -67,6 +67,7 @@ fig = px.scatter(
     y="Electrode Resistance (Ω)",
     color="Time Category",
     hover_data={
+        "Time Category": False,
         "Time (s)": ':.1f',
         "Power (W)": ':.1f',
         "Volume (fl oz)": ':.2f',
