@@ -15,9 +15,9 @@ st.title("⏱️ HOCl Generation Time Estimator")
 st.markdown("Visualize electrolysis time across fluid volume and electrode resistance.")
 
 # --- Inputs ---
-target_ppm = st.slider("Target HOCl Concentration (ppm)", 10, 500, 100, 10)
-faradaic_eff = st.slider("Faradaic Efficiency (%)", 10, 100, 50, 5) / 100
-voltage = st.slider("Load Voltage (V)", 3.0, 12.0, 7.2, 0.1)
+target_ppm = st.slider("Target HOCl Concentration (ppm)", 10, 500, 100, 10, help="Default to 100ppm assumption")
+faradaic_eff = st.slider("Faradaic Efficiency (%)", 10, 100, 50, 5, help="50% is a reasonable assumption based on using membrane electrodes, worst case is close to 20% and best case is close to 80%") / 100
+voltage = st.slider("Load Voltage (V)", 3.0, 12.0, 7.2, 0.1, help="7.2V is doubling a nominal 1S 3.6V cell")
 
 volume_range = st.slider("Volume (fl oz)", 0.1, 5.0, (0.1, 1.0), 0.1)
 resistance_range = st.slider("Electrode Resistance (Ω)", 0.1, 10.0, (1.0, 4.0), 0.1)
