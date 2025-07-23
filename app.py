@@ -22,6 +22,12 @@ voltage = st.slider("Load Voltage (V)", 3.0, 12.0, 7.2, 0.1)
 volume_range = st.slider("Volume (fl oz)", 0.1, 5.0, (0.1, 1.0), 0.1)
 resistance_range = st.slider("Electrode Resistance (Ω)", 0.1, 10.0, (1.0, 4.0), 0.1)
 
+time_thresholds = st.slider(
+    "Time Category Thresholds (seconds)",
+    0.1, 10.0, (2.0, 5.0), 0.1,
+    help="Adjust the lower (fast-to-medium) and upper (medium-to-slow) time thresholds."
+)
+
 # --- Setup grid ---
 volume_values = np.linspace(volume_range[0], volume_range[1], 40)
 resistance_values = np.linspace(resistance_range[0], resistance_range[1], 40)
@@ -45,12 +51,12 @@ for R in resistance_values:
         power = voltage * current
 
         # Categorize
-        if time <= 2:
-            category = "Fast (≤ 2s)"
-        elif time <= 5:
-            category = "Moderate (2–5s)"
+        if time <= time_thresholds[0]:
+            category = f"Fast (≤ {time_thresholds[0]:.1f}s)"
+        elif time <= time_thresholds[1]:
+            category = f"Moderate ({time_thresholds[0]:.1f}–{time_thresholds[1]:.1f}s)"
         else:
-            category = "Slow (> 5s)"
+            category = f"Slow (> {time_thresholds[1]:.1f}s)"
 
         data["Volume (fl oz)"].append(floz)
         data["Electrode Resistance (Ω)"].append(R)
@@ -76,9 +82,9 @@ fig = px.scatter(
     size_max=10,
     title="HOCl Generation Time by Volume and Resistance",
     color_discrete_map={
-        "Fast (≤ 2s)": "green",
-        "Moderate (2–5s)": "orange",
-        "Slow (> 5s)": "red",
+        f"Fast (≤ {time_thresholds[0]:.1f}s)": "green",
+        f"Moderate ({time_thresholds[0]:.1f}–{time_thresholds[1]:.1f}s)": "orange",
+        f"Slow (> {time_thresholds[1]:.1f}s)": "red",
     },
 )
 
