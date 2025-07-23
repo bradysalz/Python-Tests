@@ -69,8 +69,8 @@ fig = px.scatter(
     hover_data={
         "Time (s)": ':.1f',
         "Power (W)": ':.1f',
-        "Volume (fl oz)": False,
-        "Electrode Resistance (Ω)": False,
+        "Volume (fl oz)": ':.2f',
+        "Electrode Resistance (Ω)": ':.2f',
     },
     size_max=10,
     title="HOCl Generation Time by Volume and Resistance",
