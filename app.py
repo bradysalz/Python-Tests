@@ -1,6 +1,7 @@
 import streamlit as st
 import numpy as np
 import pandas as pd
+import text
 import plotly.express as px
 
 # Constants
@@ -101,3 +102,5 @@ fig.update_layout(height=600)
 
 st.plotly_chart(fig, use_container_width=True)
 
+with st.expander("View the math behind the calculator"):
+    text.make_body()

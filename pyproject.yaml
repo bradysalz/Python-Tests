@@ -1,0 +1,8 @@
+[project]
+name = "streamlit-app"
+version = "0.1.0"
+description = "Streamlit app using uv"
+dependencies = []
+
+[tool.uv]
+python = "3.11"
