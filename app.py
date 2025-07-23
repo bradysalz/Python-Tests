@@ -37,6 +37,8 @@ data = {
     "Electrode Resistance (Ω)": [],
     "Time (s)": [],
     "Power (W)": [],
+    "Load Current (A)": [],
+    "Battery Current (A)": [],
     "Time Category": [],
 }
 
@@ -49,6 +51,7 @@ for R in resistance_values:
         current = voltage / R
         time = charge / current
         power = voltage * current
+        battery_current = power / 3.6 / 0.9 # 3.6V battery, 90% efficiency
 
         # Categorize
         if time <= time_thresholds[0]:
@@ -62,6 +65,8 @@ for R in resistance_values:
         data["Electrode Resistance (Ω)"].append(R)
         data["Time (s)"].append(time)
         data["Power (W)"].append(power)
+        data["Load Current (A)"].append(current)
+        data["Battery Current (A)"].append(battery_current)
         data["Time Category"].append(category)
 
 df = pd.DataFrame(data)
@@ -76,6 +81,8 @@ fig = px.scatter(
         "Time Category": False,
         "Time (s)": ':.1f',
         "Power (W)": ':.1f',
+        "Load Current (A)": ':.2f',
+        "Battery Current (A)": ':.2f',
         "Volume (fl oz)": ':.2f',
         "Electrode Resistance (Ω)": ':.2f',
     },
