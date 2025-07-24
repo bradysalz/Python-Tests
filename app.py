@@ -3,6 +3,8 @@ import numpy as np
 import pandas as pd
 import text
 import plotly.express as px
+import plotly.graph_objects as go
+from plotly.subplots import make_subplots
 
 # Constants
 F = 96485  # Faraday's constant (C/mol)
@@ -29,9 +31,15 @@ time_thresholds = st.slider(
     help="Adjust the lower (fast-to-medium) and upper (medium-to-slow) time thresholds."
 )
 
+power_thresholds = st.slider(
+    "Power Category Thresholds (W)",
+    10.0, 100.0, (30.0, 50.0), 1.0,
+    help="Adjust the lower (low-to-medium) and upper (medium-to-high) power thresholds."
+)
+
 # --- Setup grid ---
-volume_values = np.linspace(volume_range[0], volume_range[1], 40)
-resistance_values = np.linspace(resistance_range[0], resistance_range[1], 40)
+volume_values = np.linspace(volume_range[0], volume_range[1], 28)
+resistance_values = np.linspace(resistance_range[0], resistance_range[1], 28)
 
 data = {
     "Volume (fl oz)": [],
@@ -41,6 +49,7 @@ data = {
     "Load Current (A)": [],
     "Battery Current (A)": [],
     "Time Category": [],
+    "Power Category": [],
 }
 
 for R in resistance_values:
@@ -54,13 +63,21 @@ for R in resistance_values:
         power = voltage * current
         battery_current = power / 3.6 / 0.9 # 3.6V battery, 90% efficiency
 
-        # Categorize
+        # Categorize time
         if time <= time_thresholds[0]:
-            category = f"Fast (≤ {time_thresholds[0]:.1f}s)"
+            time_category = f"Fast (≤ {time_thresholds[0]:.1f}s)"
         elif time <= time_thresholds[1]:
-            category = f"Moderate ({time_thresholds[0]:.1f}–{time_thresholds[1]:.1f}s)"
+            time_category = f"Moderate ({time_thresholds[0]:.1f}–{time_thresholds[1]:.1f}s)"
         else:
-            category = f"Slow (> {time_thresholds[1]:.1f}s)"
+            time_category = f"Slow (> {time_thresholds[1]:.1f}s)"
+
+        # Categorize power
+        if power <= power_thresholds[0]:
+            power_category = f"Low (≤ {power_thresholds[0]:.1f}W)"
+        elif power <= power_thresholds[1]:
+            power_category = f"Medium ({power_thresholds[0]:.1f}–{power_thresholds[1]:.1f}W)"
+        else:
+            power_category = f"High (> {power_thresholds[1]:.1f}W)"
 
         data["Volume (fl oz)"].append(floz)
         data["Electrode Resistance (Ω)"].append(R)
@@ -68,37 +85,70 @@ for R in resistance_values:
         data["Power (W)"].append(power)
         data["Load Current (A)"].append(current)
         data["Battery Current (A)"].append(battery_current)
-        data["Time Category"].append(category)
+        data["Time Category"].append(time_category)
+        data["Power Category"].append(power_category)
 
 df = pd.DataFrame(data)
 
-# --- Scatter Plot ---
-fig = px.scatter(
-    df,
-    x="Volume (fl oz)",
-    y="Electrode Resistance (Ω)",
-    color="Time Category",
-    hover_data={
-        "Time Category": False,
-        "Time (s)": ':.1f',
-        "Power (W)": ':.1f',
-        "Load Current (A)": ':.2f',
-        "Battery Current (A)": ':.2f',
-        "Volume (fl oz)": ':.2f',
-        "Electrode Resistance (Ω)": ':.2f',
-    },
-    size_max=10,
-    title="HOCl Generation Time by Volume and Resistance",
-    color_discrete_map={
-        f"Fast (≤ {time_thresholds[0]:.1f}s)": "green",
-        f"Moderate ({time_thresholds[0]:.1f}–{time_thresholds[1]:.1f}s)": "orange",
-        f"Slow (> {time_thresholds[1]:.1f}s)": "red",
-    },
-)
+# --- Create single combined plot ---
+fig = go.Figure()
 
-fig.update_traces(marker=dict(size=8, line=dict(width=1, color="DarkSlateGrey")))
-fig.update_traces(hoverlabel=dict(font=dict(size=20)))
-fig.update_layout(height=600)
+# Define marker shapes for power levels
+power_shapes = {
+    f"Low (≤ {power_thresholds[0]:.1f}W)": "star",
+    f"Medium ({power_thresholds[0]:.1f}–{power_thresholds[1]:.1f}W)": "circle",
+    f"High (> {power_thresholds[1]:.1f}W)": "triangle-up"
+}
+
+# Define colors for time categories
+time_colors = {
+    f"Fast (≤ {time_thresholds[0]:.1f}s)": "green",
+    f"Moderate ({time_thresholds[0]:.1f}–{time_thresholds[1]:.1f}s)": "orange",
+    f"Slow (> {time_thresholds[1]:.1f}s)": "red"
+}
+
+# Create traces for each power-time combination
+for power_cat in power_shapes.keys():
+    for time_cat in time_colors.keys():
+        mask = (df["Power Category"] == power_cat) & (df["Time Category"] == time_cat)
+        if mask.any():
+            fig.add_trace(go.Scatter(
+                x=df[mask]["Volume (fl oz)"],
+                y=df[mask]["Electrode Resistance (Ω)"],
+                mode='markers',
+                marker=dict(
+                    symbol=power_shapes[power_cat],
+                    size=10,
+                    color=time_colors[time_cat],
+                    line=dict(width=1, color="DarkSlateGrey")
+                ),
+                name=f"{power_cat} + {time_cat}",
+                hovertemplate=(
+                    "<b>%{fullData.name}</b><br>" +
+                    "Volume: %{x:.2f} fl oz<br>" +
+                    "Resistance: %{y:.2f} Ω<br>" +
+                    "Time: %{customdata[0]:.1f} s<br>" +
+                    "Power: %{customdata[1]:.1f} W<br>" +
+                    "Load Current: %{customdata[2]:.2f} A<br>" +
+                    "Battery Current: %{customdata[3]:.2f} A<br>" +
+                    "<extra></extra>"
+                ),
+                customdata=np.column_stack((
+                    df[mask]["Time (s)"],
+                    df[mask]["Power (W)"],
+                    df[mask]["Load Current (A)"],
+                    df[mask]["Battery Current (A)"]
+                )),
+                hoverlabel=dict(font=dict(size=16))
+            ))
+
+fig.update_layout(
+    title="HOCl Generation: Time (Color) and Power (Shape)",
+    xaxis_title="Volume (fl oz)",
+    yaxis_title="Electrode Resistance (Ω)",
+    height=600,
+    showlegend=True
+)
 
 st.plotly_chart(fig, use_container_width=True)
 

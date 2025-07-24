@@ -28,5 +28,5 @@ def make_body():
     - $F$: Faraday's constant (96485 C/mol or 96485 A⋅s/mol)
     - $I$: Applied current (Amperes, A)
     - $M_{HOCl}$: Molar mass of HOCl (approximately 52.46 g/mol)
-    - $\eta$: Faradaic efficiency (a dimensionless value between 0 and 1, representing the fraction of current that actually contributes to HOCl production; typically ranges from 0.2 in low quality setups, to averaging 0.5 with membrane based setups, to peaking around 0.8 to 0.90 for well-designed industrial systems).
+    - $eta$: Faradaic efficiency (a dimensionless value between 0 and 1, representing the fraction of current that actually contributes to HOCl production; typically ranges from 0.2 in low quality setups, to averaging 0.5 with membrane based setups, to peaking around 0.8 to 0.90 for well-designed industrial systems).
     """)
