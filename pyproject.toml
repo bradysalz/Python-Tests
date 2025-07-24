@@ -1,0 +1,10 @@
+[project]
+name = "streamlit-app"
+version = "0.1.0"
+description = "Streamlit app using uv"
+dependencies = [
+    "matplotlib>=3.10.3",
+    "pandas>=2.3.1",
+    "plotly>=6.2.0",
+    "streamlit>=1.47.0",
+]
